@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#2f855a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>雅思陪伴学习 · IELTS 6.5</title>
 <style>
 :root{--green:#2f855a;--green-d:#276749;--bg:#f7faf7;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--gold:#d69e2e;}
@@ -684,5 +686,6 @@ function renderPlan(){
 // 初始化
 renderHome();setStreak();renderWords();renderSpeak();renderPractice();renderPlan();renderSrvStatus();
 </script>
+<script>if("serviceWorker" in navigator && location.protocol === "https:"){navigator.serviceWorker.register("sw.js").catch(()=>{});}</script>
 </body>
 </html>
