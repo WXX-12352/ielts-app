@@ -60,6 +60,7 @@ td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;}
 .chunkbtn:active{opacity:.7;}
 .catbtn.on{background:var(--green);color:#fff;}
 .lvlbtn.on{background:var(--green);color:#fff;}
+.dlvlbtn.on{background:var(--green);color:#fff;}
 .sent .acts button[disabled]{opacity:.45;cursor:default;}
 #toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;display:none;z-index:99;max-width:80%;text-align:center;}
 </style>
@@ -121,6 +122,11 @@ td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;}
         <button class="chunkbtn catbtn" data-cat="语法" onclick="setPracCat('语法')">语法</button>
         <button class="chunkbtn catbtn" data-cat="词汇" onclick="setPracCat('词汇')">词汇</button>
       </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+        <button class="chunkbtn dlvlbtn" data-dlvl="全部" onclick="setPracLvl('全部')">全部难度</button>
+        <button class="chunkbtn dlvlbtn" data-dlvl="基础" onclick="setPracLvl('基础')">基础</button>
+        <button class="chunkbtn dlvlbtn" data-dlvl="进阶" onclick="setPracLvl('进阶')">进阶</button>
+      </div>
       <div id="practiceList"></div>
     </div>
     <div class="card">
@@ -173,6 +179,16 @@ td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;}
         <button class="chunkbtn lvlbtn" data-lvl="4" onclick="setLevel(4)">冲刺6.5</button>
       </div>
       <p class="hint" id="lvlHint" style="margin-top:8px;"></p>
+    </div>
+    <div class="card">
+      <h2>📝 水平自测</h2>
+      <p class="hint" id="placeStatus">尚未自测，建议先测一次定档。</p>
+      <button class="btn" onclick="startPlace()">▶️ 开始自测（20 题 · 约 10 分钟）</button>
+      <div id="placeWrap" style="display:none;margin-top:10px;">
+        <div id="placeScore" style="font-weight:700;margin-bottom:8px;"></div>
+        <div id="placeList"></div>
+        <button class="btn" onclick="submitPlace()" style="margin-top:8px;">📥 交卷定档</button>
+      </div>
     </div>
     <div class="card"><h2>🎯 目标</h2><p style="line-height:1.7;font-size:14px;">雅思 <b>6.5</b> · 12 个月 · 每天 1 小时<br>听力阅读拉分、写作口语保底</p></div>
     <div class="card"><h2>☀️ 早 30 分钟（输入）</h2>
@@ -268,7 +284,8 @@ L2:"Welcome to the city library. The library is open from nine in the morning to
 };
 const READING = {
 R1:"Tea is one of the most popular drinks in the world. It was first discovered in China more than four thousand years ago. According to legend, a Chinese emperor was boiling water when some leaves from a nearby tree fell into it. Today, China and India are the two largest tea producers. Most of the world's tea is grown in Asia because tea plants need warm weather and plenty of rain.",
-R2:"More and more people are riding bicycles in cities. Cycling is good for the environment because it does not produce air pollution. It is also a cheap and healthy way to travel. However, cycling in busy cities can be dangerous. Many cities are now building special cycle lanes to make cycling safer."
+R2:"More and more people are riding bicycles in cities. Cycling is good for the environment because it does not produce air pollution. It is also a cheap and healthy way to travel. However, cycling in busy cities can be dangerous. Many cities are now building special cycle lanes to make cycling safer.",
+R3:"Renewable energy comes from sources that do not run out, such as the sun, the wind and water. Unlike fossil fuels, renewable sources produce little or no pollution. Solar panels change sunlight into electricity, and wind turbines use the power of the wind. The main problem is that some renewable sources depend on the weather, so they cannot always produce energy. Scientists are working on better batteries to store this energy for cloudy or windless days."
 };
 const QBANK = [
 {id:1,cat:"听力",lvl:1,audio:"L1",q:"What is the monthly rent?",opts:["Seven hundred pounds","Eight hundred pounds","Nine hundred pounds"],ans:1,exp:"原文：'eight hundred pounds a month'，即每月 800 英镑。"},
@@ -296,9 +313,49 @@ const QBANK = [
 {id:23,cat:"词汇",lvl:1,q:"Which word means 'easy to use and saving time'?",opts:["convenient","expensive","difficult"],ans:0,exp:"convenient = 方便的。"},
 {id:24,cat:"词汇",lvl:1,q:"The word 'benefit' means ___.",opts:["advantage","disadvantage","cost"],ans:0,exp:"benefit = 好处、优势。"},
 {id:25,cat:"词汇",lvl:1,q:"Which word is closest to 'achieve'?",opts:["fail","accomplish","avoid"],ans:1,exp:"accomplish 与 achieve 同义（完成、实现）。"},
-{id:26,cat:"词汇",lvl:1,q:"'environment' refers to ___.",opts:["the natural world around us","a kind of food","a type of job"],ans:0,exp:"environment = 环境，指我们周围的自然环境。"}
+{id:26,cat:"词汇",lvl:1,q:"'environment' refers to ___.",opts:["the natural world around us","a kind of food","a type of job"],ans:0,exp:"environment = 环境，指我们周围的自然环境。"},
+{id:27,cat:"词汇",lvl:2,q:"'deteriorate' means to ___.",opts:["improve","become worse","stay the same"],ans:1,exp:"deteriorate = 恶化、变差。"},
+{id:28,cat:"词汇",lvl:2,q:"Which word means 'the way of life of a group of people'?",opts:["culture","climate","consequence"],ans:0,exp:"culture = 文化、生活方式。"},
+{id:29,cat:"词汇",lvl:2,q:"'essential' is closest in meaning to ___.",opts:["unnecessary","necessary","optional"],ans:1,exp:"essential = 必要的、必不可少的。"},
+{id:30,cat:"词汇",lvl:3,q:"'inevitable' means ___.",opts:["avoidable","certain to happen","unlikely"],ans:1,exp:"inevitable = 不可避免的、必然发生的。"},
+{id:31,cat:"词汇",lvl:3,q:"Which word means 'a serious problem that needs attention'?",opts:["issue","leisure","benefit"],ans:0,exp:"issue = 问题、议题。"},
+{id:32,cat:"词汇",lvl:3,q:"'fluctuate' means to ___.",opts:["stay constant","rise and fall irregularly","disappear"],ans:1,exp:"fluctuate = 波动、起伏。"},
+{id:33,cat:"语法",lvl:2,q:"She has lived in Beijing ___ ten years.",opts:["for","since","during"],ans:0,exp:"时间段用 for；时间点才用 since。"},
+{id:34,cat:"语法",lvl:2,q:"The man ___ is talking to my father is my teacher.",opts:["which","who","whom"],ans:1,exp:"指人且在从句中作主语，用 who。"},
+{id:35,cat:"语法",lvl:2,q:"I look forward to ___ from you soon.",opts:["hear","hearing","heard"],ans:1,exp:"look forward to 后接动名词 -ing。"},
+{id:36,cat:"语法",lvl:2,q:"If I ___ rich, I would travel around the world.",opts:["am","were","will be"],ans:1,exp:"虚拟语气，与现在事实相反用 were。"},
+{id:37,cat:"语法",lvl:3,q:"By the time he arrived, the meeting ___.",opts:["already started","had already started","has already started"],ans:1,exp:"过去的过去，用过去完成时 had started。"},
+{id:38,cat:"语法",lvl:3,q:"___ the heavy rain, we still went out.",opts:["Despite","Although","Because"],ans:0,exp:"Despite + 名词；Although + 从句。"},
+{id:39,cat:"阅读",lvl:2,passage:"R3",q:"Which is an example of renewable energy?",opts:["Coal","Wind","Petrol"],ans:1,exp:"原文：'such as the sun, the wind and water'。"},
+{id:40,cat:"阅读",lvl:2,passage:"R3",q:"The main problem with some renewable sources is that they ___.",opts:["cost too much","depend on the weather","produce pollution"],ans:1,exp:"原文：'depend on the weather'。"},
+{id:41,cat:"阅读",lvl:3,passage:"R3",q:"What are scientists trying to improve?",opts:["Solar panels","Batteries","Wind turbines"],ans:1,exp:"原文：'working on better batteries to store this energy'。"},
+{id:42,cat:"阅读",lvl:3,passage:"R3",q:"Unlike fossil fuels, renewable sources ___.",opts:["produce little pollution","never run out of supply","are always available"],ans:0,exp:"原文：'produce little or no pollution'。"}
 ];
 
+
+// ===== 水平自测（20 题，估起点，不入错题本）=====
+const PLACEMENT = [
+{id:"p1",cat:"词汇",q:"'convenient' 的意思最接近？",opts:["昂贵的","方便的","困难的"],ans:1,exp:"convenient = 方便的"},
+{id:"p2",cat:"词汇",q:"'consequence' 的意思是？",opts:["原因","后果","优点"],ans:1,exp:"consequence = 后果、结果"},
+{id:"p3",cat:"词汇",q:"'significant' 的意思是？",opts:["重要的","微小的","相似的"],ans:0,exp:"significant = 重要的、显著的"},
+{id:"p4",cat:"词汇",q:"'sustainable' 的意思是？",opts:["昂贵的","可持续的","临时的"],ans:1,exp:"sustainable = 可持续的"},
+{id:"p5",cat:"词汇",q:"'contribute to' 的意思是？",opts:["妨碍","贡献、促成","放弃"],ans:1,exp:"contribute to = 贡献、促成"},
+{id:"p6",cat:"语法",q:"She ___ to school by bike every day.",opts:["go","goes","going"],ans:1,exp:"第三人称单数用 goes"},
+{id:"p7",cat:"语法",q:"I have lived here ___ 2015.",opts:["for","since","from"],ans:1,exp:"时间点用 since"},
+{id:"p8",cat:"语法",q:"If it ___ tomorrow, we will stay home.",opts:["rains","will rain","rained"],ans:0,exp:"条件从句用一般现在时"},
+{id:"p9",cat:"语法",q:"The report ___ by the manager yesterday.",opts:["wrote","was written","is written"],ans:1,exp:"过去时被动 was written"},
+{id:"p10",cat:"语法",q:"He is interested ___ learning English.",opts:["on","in","at"],ans:1,exp:"be interested in"},
+{id:"p11",cat:"听力",audio:"L1",q:"听力里房租每月多少？",opts:["700英镑","800英镑","900英镑"],ans:1,exp:"原文：eight hundred pounds a month"},
+{id:"p12",cat:"听力",audio:"L1",q:"下列哪项不包含在房租里？",opts:["水费","电费","家具"],ans:1,exp:"原文：including water but not electricity"},
+{id:"p13",cat:"听力",audio:"L2",q:"图书馆周六几点关门？",opts:["五点","六点","八点"],ans:0,exp:"原文：from ten to five on Saturdays"},
+{id:"p14",cat:"听力",audio:"L2",q:"一次最多借几本书？",opts:["三本","六本","十本"],ans:1,exp:"原文：up to six books"},
+{id:"p15",cat:"听力",audio:"L2",q:"借书可借多久？",opts:["一周","两周","三周"],ans:2,exp:"原文：keep them for three weeks"},
+{id:"p16",cat:"阅读",passage:"R1",q:"茶叶最早在哪里被发现？",opts:["日本","印度","中国"],ans:2,exp:"原文：first discovered in China"},
+{id:"p17",cat:"阅读",passage:"R1",q:"为什么大部分茶产在亚洲？",opts:["茶树需要温暖和充足雨水","茶只在亚洲流行","亚洲土壤最特别"],ans:0,exp:"原文：tea plants need warm weather and plenty of rain"},
+{id:"p18",cat:"阅读",passage:"R2",q:"骑车对环境的好处是？",opts:["很快","不产生空气污染","很流行"],ans:1,exp:"原文：does not produce air pollution"},
+{id:"p19",cat:"阅读",passage:"R2",q:"城市建自行车道是为了？",opts:["让骑车更安全","降低车价","卖更多自行车"],ans:0,exp:"原文：to make cycling safer"},
+{id:"p20",cat:"阅读",passage:"R2",q:"下面哪项不是文中提到的骑车优点？",opts:["便宜","健康","快"],ans:2,exp:"原文提到 cheap 和 healthy，没提 fast"}
+];
 
 const INTERVALS=[1,2,4,7,15,30];
 const LEVELS=[{id:1,name:"零基础",words:10},{id:2,name:"初级（CET-4基础）",words:15},{id:3,name:"中级",words:20},{id:4,name:"冲刺6.5",words:25}];
@@ -319,6 +376,9 @@ if(!state.mistakes)state.mistakes={};
 if(!state.practice)state.practice={};
 if(!state.level)state.level=2;
 if(state.seed===undefined)state.seed=0;
+if(!state.accLog)state.accLog=[];
+if(!state.levelLog)state.levelLog=[];
+if(!state.lastLevelChange)state.lastLevelChange=0;
 save(state);
 
 // ===== 发音 =====
@@ -618,7 +678,9 @@ function answerQ(id,chosen,mode){
     if(!state.practice[id])state.practice[id]={right:0,wrong:0};
     if(correct)state.practice[id].right++;else state.practice[id].wrong++;
     if(!correct)state.mistakes[id]={box:0,next:Date.now()+INTERVALS[0]*86400000};
+    recordAnswer(correct);
     save(state);
+    autoAdjust();
   }else{
     reviewMistake(id,correct);
   }
@@ -636,9 +698,10 @@ function renderPractice(){
   const total=all.reduce((a,b)=>a+b.right+b.wrong,0);
   const right=all.reduce((a,b)=>a+b.right,0);
   document.getElementById("pracStat").textContent=`已练 ${total} 题 · 对 ${right} · 错题 ${Object.keys(state.mistakes).length}`;
-  const list=QBANK.filter(q=>pracCat==="全部"||q.cat===pracCat);
+  const list=QBANK.filter(q=>(pracCat==="全部"||q.cat===pracCat)&&qMatchLvl(q));
   document.getElementById("practiceList").innerHTML=list.map(q=>qCardHtml(q,"practice")).join("");
   document.querySelectorAll(".catbtn").forEach(b=>b.classList.toggle("on",b.dataset.cat===pracCat));
+  document.querySelectorAll(".dlvlbtn").forEach(b=>b.classList.toggle("on",b.dataset.dlvl===pracLvl));
 }
 function renderMistakes(){
   const due=dueMistakes();
@@ -664,8 +727,10 @@ function submitTest(){
     else state.mistakes[q.id]={box:0,next:Date.now()+INTERVALS[0]*86400000};
     if(!state.practice[q.id])state.practice[q.id]={right:0,wrong:0};
     if(correct)state.practice[q.id].right++;else state.practice[q.id].wrong++;
+    recordAnswer(correct);
   });
   save(state);
+  autoAdjust();
   const detail=pool.map(q=>{
     const a=window._testAns[q.id];const ok=a===q.ans;
     return `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--line);">${ok?"✅":"❌"} ${esc(q.q)}${ok?"":"（答案 "+"ABCD"[q.ans]+"）"}</div>`;
@@ -675,13 +740,75 @@ function submitTest(){
   renderPractice();
 }
 
-function setLevel(l){state.level=l;save(state);renderPlan();renderHome();renderWords();toast("水平已更新："+LEVELS[l-1].name);}
+function setLevel(l){state.level=l;state.lastLevelChange=Date.now();state.levelLog.push({d:today(),lvl:l,reason:"手动选择"});save(state);renderPlan();renderHome();renderWords();toast("水平已更新："+LEVELS[l-1].name);}
 function renderPlan(){
   document.querySelectorAll(".lvlbtn").forEach(b=>b.classList.toggle("on",(b.dataset.lvl|0)===state.level));
   const L=LEVELS[(state.level||2)-1];
   const el=document.getElementById("lvlHint");
-  if(el)el.textContent=`当前：${L.name} · 每天新词 ${L.words} 个 · 计划会随你的表现动态调整`;
+  const acc=recentAcc();
+  const accTxt=acc===null?"":` · 近 ${state.accLog.length} 题正确率 ${Math.round(acc*100)}%`;
+  if(el)el.textContent=`当前：${L.name} · 每天新词 ${L.words} 个${accTxt} · 表现会自动升降档`;
+  const pst=document.getElementById("placeStatus");
+  if(pst)pst.textContent=state.placed?`上次自测 ${state.placeDate||""} 已定档，可随时重测`:"尚未自测，建议先测一次定档";
 }
+
+// ===== 自动升降档 + 水平自测 =====
+function recordAnswer(correct){state.accLog.push(correct?1:0);if(state.accLog.length>40)state.accLog=state.accLog.slice(-40);}
+function recentAcc(){if(state.accLog.length<10)return null;return state.accLog.reduce((a,b)=>a+b,0)/state.accLog.length;}
+function autoAdjust(){
+  if(state.accLog.length<20)return;
+  const acc=recentAcc();
+  const now=Date.now();
+  if(now-state.lastLevelChange<7*86400000)return;
+  if(acc>=0.85&&state.level<4){
+    state.level++;state.lastLevelChange=now;
+    state.levelLog.push({d:today(),lvl:state.level,reason:"近期正确率 "+Math.round(acc*100)+"% 自动升档"});
+    save(state);renderPlan();renderHome();renderWords();toast("🎉 表现优秀，已升档："+LEVELS[state.level-1].name);
+  }else if(acc<=0.45&&state.level>1){
+    state.level--;state.lastLevelChange=now;
+    state.levelLog.push({d:today(),lvl:state.level,reason:"近期正确率 "+Math.round(acc*100)+"% 自动降档"});
+    save(state);renderPlan();renderHome();renderWords();toast("📉 先降一档巩固："+LEVELS[state.level-1].name);
+  }
+}
+function ctxHtml(q){
+  let ctx="";
+  if(q.audio){const t=LISTEN_AUDIO[q.audio];ctx+=`<button class="btn ghost" style="margin-bottom:8px;" data-speak="${esc(t)}">🔊 播放听力</button> <button class="btn ghost" style="margin-bottom:8px;" data-speak="${esc(t)}" data-rate="slow">🐢 慢速</button>`;}
+  if(q.passage){ctx+=`<div style="background:#f3f6f4;border-radius:10px;padding:10px;font-size:14px;line-height:1.7;margin-bottom:8px;">${esc(READING[q.passage])}</div>`;}
+  return ctx;
+}
+function placeCardHtml(q){
+  const opts=q.opts.map((o,i)=>`<button class="chunkbtn" style="text-align:left;width:100%;font-size:14px;padding:9px 12px;margin:3px 0;" onclick="answerPlace('${q.id}',${i})">${"ABCD"[i]}. ${esc(o)}</button>`).join("");
+  return `<div class="sent" id="qcard-${q.id}"><div class="hint">【${q.cat}】</div>${ctxHtml(q)}<div style="font-weight:600;margin:4px 0;">${esc(q.q)}</div>${opts}</div>`;
+}
+let placeAnswers={};
+function startPlace(){
+  placeAnswers={};
+  document.getElementById("placeList").innerHTML=PLACEMENT.map(q=>placeCardHtml(q)).join("");
+  document.getElementById("placeScore").textContent="";
+  document.getElementById("placeWrap").style.display="block";
+  window.scrollTo(0,document.body.scrollHeight);
+}
+function answerPlace(id,chosen){
+  placeAnswers[id]=chosen;
+  const card=document.getElementById("qcard-"+id);
+  card.querySelectorAll("button[onclick^='answerPlace']").forEach((b,i)=>{b.style.background=i===chosen?"var(--green)":"#e8f5ee";b.style.color=i===chosen?"#fff":"var(--green-d)";});
+}
+function submitPlace(){
+  let right=0;
+  PLACEMENT.forEach(q=>{if(placeAnswers[q.id]===q.ans)right++;});
+  let lvl=1;
+  if(right>=17)lvl=4;else if(right>=13)lvl=3;else if(right>=8)lvl=2;
+  state.level=lvl;state.placed=true;state.placeDate=today();state.lastLevelChange=Date.now();
+  state.levelLog.push({d:today(),lvl:lvl,reason:"水平自测 "+right+"/20"});
+  save(state);
+  document.getElementById("placeScore").innerHTML=`得分 <b>${right}</b>/20 · 定档：<b>${LEVELS[lvl-1].name}</b>`;
+  const detail=PLACEMENT.map(q=>{const ok=placeAnswers[q.id]===q.ans;return `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--line);">${ok?"✅":"❌"} ${esc(q.q)}${ok?"":"（答案 "+"ABCD"[q.ans]+"）"}</div>`;}).join("");
+  document.getElementById("placeList").innerHTML=detail;
+  renderPlan();renderHome();renderWords();toast("已定档："+LEVELS[lvl-1].name);
+}
+let pracLvl="全部";
+function setPracLvl(v){pracLvl=v;document.querySelectorAll(".dlvlbtn").forEach(b=>b.classList.toggle("on",b.dataset.dlvl===pracLvl));renderPractice();}
+function qMatchLvl(q){if(pracLvl==="全部")return true;if(pracLvl==="基础")return (q.lvl||1)<=1;return (q.lvl||1)>=2;}
 
 // 初始化
 renderHome();setStreak();renderWords();renderSpeak();renderPractice();renderPlan();renderSrvStatus();
